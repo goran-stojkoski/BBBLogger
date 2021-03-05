@@ -1,7 +1,11 @@
 import pandas as pd
+from openpyxl import load_workbook
 
 file_location = r"C:\Users\S3017862\OneDrive\Documents\BBB\E-brewR2.4_ADDIS PALE_BREW41-42_211070_01.xlsm"
 brewlog_df = pd.read_excel(file_location, sheet_name="BREWLOG",engine='openpyxl')
+
+existing_database_file = 'BBBlog.xlsx'
+
 
 #%%
 
@@ -57,5 +61,17 @@ cell_locations = {
     'fermenter_o2ppm': (55, 7)
 }
 
-for key,val in cell_locations.items():
-    print(key,brewlog_df.iloc[val])
+#%% create dictionary from cell locations to create new line in the form of a workbook
+
+cell_values = { key: [brewlog_df.iloc[val]] for key,val in cell_locations.items()}
+new_line = pd.DataFrame(cell_values)
+
+#%%
+
+book = load_workbook(existing_database_file)
+writer = pd.ExcelWriter(existing_database_file, engine='openpyxl')
+writer.book = book
+writer.sheets = {ws.title: ws for ws in book.worksheets}
+startrow = book.active.max_row
+new_line.to_excel(writer, startrow = startrow, index=False, header=False)
+writer.close()
